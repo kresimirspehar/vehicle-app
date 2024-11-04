@@ -1,25 +1,16 @@
-import logo from './logo.svg';
-import './App.css';
+import React from "react";
+import { Route, Routes } from "react-router-dom";
+import VehicleListPage from "./pages/VehicleListPage";
+import VehicleEditPage from "./pages/VehicleEditPage";
 
-function App() {
+const App = () => {
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <Routes>
+      <Route path="/" element={<VehicleListPage />} />
+      <Route path="/edit/:id" element={<VehicleEditPage />} />
+      <Route path="/create" element={<VehicleEditPage />} />
+    </Routes>
   );
-}
+};
 
 export default App;
