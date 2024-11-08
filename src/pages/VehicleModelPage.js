@@ -10,6 +10,12 @@ const VehicleModelPage = () => {
   });
   const [editVehicleModel, setEditVehicleModel] = useState(null);
 
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 5;
+  const [sortField, setSortField] = useState("Name");
+  const [sortOrder, setSortOrder] = useState("asc");
+  const [filterText, setFilterText] = useState("");
+
   useEffect(() => {
     const fetchVehicleModels = async () => {
       const data = await VehicleModelService.readAll();
@@ -73,6 +79,46 @@ const VehicleModelPage = () => {
     setVehicleModels(updatedModels);
   };
 
+  const handleSort = (field) => {
+    const order = sortField === field && sortOrder === "asc" ? "desc" : "asc";
+    setSortField(field);
+    setSortOrder(order);
+  };
+
+  // Filtriranje, sortiranje i paginacija podataka
+  const filteredVehicleModels = vehicleModels
+    .filter(
+      (model) =>
+        model.Name.toLowerCase().includes(filterText.toLowerCase()) ||
+        model.Abrv.toLowerCase().includes(filterText.toLowerCase()) ||
+        model.MakeId.toLowerCase().includes(filterText.toLowerCase())
+    )
+    .sort((a, b) => {
+      if (a[sortField] < b[sortField]) return sortOrder === "asc" ? -1 : 1;
+      if (a[sortField] > b[sortField]) return sortOrder === "asc" ? 1 : -1;
+      return 0;
+    });
+
+  // Paginacija
+  const startIndex = (currentPage - 1) * pageSize;
+  const paginatedVehicleModels = filteredVehicleModels.slice(
+    startIndex,
+    startIndex + pageSize
+  );
+
+  const handleNextPage = () => {
+    setCurrentPage((prevPage) => prevPage + 1);
+  };
+
+  const handlePreviousPage = () => {
+    setCurrentPage((prevPage) => Math.max(prevPage - 1, 1));
+  };
+
+  const handleFilterChange = (e) => {
+    setFilterText(e.target.value);
+    setCurrentPage(1); // Resetiraj na prvu stranicu kad korisnik unese filter
+  };
+
   return (
     <div>
       <h1>Vehicle Model Page</h1>
@@ -115,8 +161,20 @@ const VehicleModelPage = () => {
           <button onClick={() => setEditVehicleModel(null)}>Cancel</button>
         )}
       </form>
+
+      <input
+        type="text"
+        placeholder="Filter by name, abbreviation or Make ID"
+        value={filterText}
+        onChange={handleFilterChange}
+      />
+
+      <button onClick={() => handleSort("Name")}>Sort by Name</button>
+      <button onClick={() => handleSort("Abrv")}>Sort by Abbreviation</button>
+      <button onClick={() => handleSort("MakeId")}>Sort by Make ID</button>
+
       <ul>
-        {vehicleModels.map((model) => (
+        {paginatedVehicleModels.map((model) => (
           <li key={model.id}>
             {model.Name} ({model.Abrv}) - Make ID: {model.MakeId}
             <button onClick={() => handleEditClick(model)}>Edit</button>
@@ -126,6 +184,16 @@ const VehicleModelPage = () => {
           </li>
         ))}
       </ul>
+
+      <button onClick={handlePreviousPage} disabled={currentPage === 1}>
+        Previous
+      </button>
+      <button
+        onClick={handleNextPage}
+        disabled={startIndex + pageSize >= filteredVehicleModels.length}
+      >
+        Next
+      </button>
     </div>
   );
 };
