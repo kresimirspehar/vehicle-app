@@ -15,6 +15,7 @@ const VehicleModelPage = () => {
   const [sortField, setSortField] = useState("Name");
   const [sortOrder, setSortOrder] = useState("asc");
   const [filterText, setFilterText] = useState("");
+  const [errors, setErrors] = useState({});
 
   useEffect(() => {
     const fetchVehicleModels = async () => {
@@ -39,20 +40,20 @@ const VehicleModelPage = () => {
 
   const handleAddVehicleModel = async (e) => {
     e.preventDefault();
-    if (
-      newVehicleModel.name &&
-      newVehicleModel.abrv &&
-      newVehicleModel.makeId
-    ) {
-      await VehicleModelService.create({
-        Name: newVehicleModel.name,
-        Abrv: newVehicleModel.abrv,
-        MakeId: newVehicleModel.makeId,
-      });
-      const updatedModels = await VehicleModelService.readAll();
-      setVehicleModels(updatedModels);
-      setNewVehicleModel({ name: "", abrv: "", makeId: "" });
+    const validationErrors = validateModel(newVehicleModel);
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
+      return;
     }
+    await VehicleModelService.create({
+      Name: newVehicleModel.name,
+      Abrv: newVehicleModel.abrv,
+      MakeId: newVehicleModel.makeId,
+    });
+    const updatedModels = await VehicleModelService.readAll();
+    setVehicleModels(updatedModels);
+    setNewVehicleModel({ name: "", abrv: "", makeId: "" });
+    setErrors({});
   };
 
   const handleEditClick = (model) => {
@@ -61,16 +62,20 @@ const VehicleModelPage = () => {
 
   const handleUpdateVehicleModel = async (e) => {
     e.preventDefault();
-    if (editVehicleModel) {
-      await VehicleModelService.update(editVehicleModel.id, {
-        Name: editVehicleModel.Name,
-        Abrv: editVehicleModel.Abrv,
-        MakeId: editVehicleModel.MakeId,
-      });
-      const updatedModels = await VehicleModelService.readAll();
-      setVehicleModels(updatedModels);
-      setEditVehicleModel(null);
+    const validationErrors = validateModel(editVehicleModel);
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
+      return;
     }
+    await VehicleModelService.update(editVehicleModel.id, {
+      Name: editVehicleModel.Name,
+      Abrv: editVehicleModel.Abrv,
+      MakeId: editVehicleModel.MakeId,
+    });
+    const updatedModels = await VehicleModelService.readAll();
+    setVehicleModels(updatedModels);
+    setEditVehicleModel(null);
+    setErrors({});
   };
 
   const handleDeleteVehicleModel = async (id) => {
@@ -119,6 +124,14 @@ const VehicleModelPage = () => {
     setCurrentPage(1); // Resetiraj na prvu stranicu kad korisnik unese filter
   };
 
+  const validateModel = (model) => {
+    const errors = {};
+    if (!model.name) errors.name = "Name is required";
+    if (!model.abrv) errors.abrv = "Abbreviation is required";
+    if (!model.makeId) errors.makeId = "Make ID is required";
+    return errors;
+  };
+
   return (
     <div>
       <h1>Vehicle Model Page</h1>
@@ -136,6 +149,7 @@ const VehicleModelPage = () => {
           }
           onChange={handleInputChange}
         />
+        {errors.name && <span style={{ color: "red" }}>{errors.name}</span>}
         <input
           type="text"
           name="abrv"
@@ -145,6 +159,7 @@ const VehicleModelPage = () => {
           }
           onChange={handleInputChange}
         />
+        {errors.abrv && <span style={{ color: "red" }}>{errors.abrv}</span>}
         <input
           type="text"
           name="makeId"
@@ -154,6 +169,7 @@ const VehicleModelPage = () => {
           }
           onChange={handleInputChange}
         />
+        {errors.makeId && <span style={{ color: "red" }}>{errors.makeId}</span>}
         <button type="submit">
           {editVehicleModel ? "Save" : "Add Vehicle Model"}
         </button>

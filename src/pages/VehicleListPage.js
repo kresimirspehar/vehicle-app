@@ -11,6 +11,7 @@ const VehicleListPage = () => {
   const [sortField, setSortField] = useState("Name");
   const [sortOrder, setSortOrder] = useState("asc");
   const [filterText, setFilterText] = useState("");
+  const [errors, setErrors] = useState({});
 
   useEffect(() => {
     const fetchVehicleMakes = async () => {
@@ -35,15 +36,19 @@ const VehicleListPage = () => {
 
   const handleAddVehicleMake = async (e) => {
     e.preventDefault();
-    if (newVehicleMake.name && newVehicleMake.abrv) {
-      await VehicleMakeService.create({
-        Name: newVehicleMake.name,
-        Abrv: newVehicleMake.abrv,
-      });
-      const updatedMakes = await VehicleMakeService.readAll();
-      setVehicleMakes(updatedMakes);
-      setNewVehicleMake({ name: "", abrv: "" });
+    const validationErrors = validateMake(newVehicleMake);
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
+      return;
     }
+    await VehicleMakeService.create({
+      Name: newVehicleMake.name,
+      Abrv: newVehicleMake.abrv,
+    });
+    const updatedMakes = await VehicleMakeService.readAll();
+    setVehicleMakes(updatedMakes);
+    setNewVehicleMake({ name: "", abrv: "" });
+    setErrors({});
   };
 
   const handleEditClick = (make) => {
@@ -52,15 +57,19 @@ const VehicleListPage = () => {
 
   const handleUpdateVehicleMake = async (e) => {
     e.preventDefault();
-    if (editVehicleMake) {
-      await VehicleMakeService.update(editVehicleMake.id, {
-        Name: editVehicleMake.Name,
-        Abrv: editVehicleMake.Abrv,
-      });
-      const updatedMakes = await VehicleMakeService.readAll();
-      setVehicleMakes(updatedMakes);
-      setEditVehicleMake(null);
+    const validationErrors = validateMake(editVehicleMake);
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
+      return;
     }
+    await VehicleMakeService.update(editVehicleMake.id, {
+      Name: editVehicleMake.Name,
+      Abrv: editVehicleMake.Abrv,
+    });
+    const updatedMakes = await VehicleMakeService.readAll();
+    setVehicleMakes(updatedMakes);
+    setEditVehicleMake(null);
+    setErrors({});
   };
 
   const handleDeleteVehicleMake = async (id) => {
@@ -106,6 +115,13 @@ const VehicleListPage = () => {
     setCurrentPage(1);
   };
 
+  const validateMake = (make) => {
+    const errors = {};
+    if (!make.name) errors.name = "Name is required";
+    if (!make.abrv) errors.abrv = "Abbrevation is required";
+    return errors;
+  };
+
   return (
     <div>
       <h1>Vehicle List Page</h1>
@@ -121,6 +137,7 @@ const VehicleListPage = () => {
           value={editVehicleMake ? editVehicleMake.Name : newVehicleMake.name}
           onChange={handleInputChange}
         />
+        {errors.name && <span style={{ color: "red" }}>{errors.name}</span>}
         <input
           type="text"
           name="abrv"
@@ -128,6 +145,7 @@ const VehicleListPage = () => {
           value={editVehicleMake ? editVehicleMake.Abrv : newVehicleMake.abrv}
           onChange={handleInputChange}
         />
+        {errors.abrv && <span style={{ color: "red" }}>{errors.abrv}</span>}
         <button type="submit">
           {editVehicleMake ? "Save" : "Add Vehicle Make"}
         </button>
@@ -135,7 +153,6 @@ const VehicleListPage = () => {
           <button onClick={() => setEditVehicleMake(null)}>Cancel</button>
         )}
       </form>
-
       <input
         type="text"
         placeholder="Filter by name or abbreviation"
