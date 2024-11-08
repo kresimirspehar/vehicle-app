@@ -6,6 +6,12 @@ const VehicleListPage = () => {
   const [newVehicleMake, setNewVehicleMake] = useState({ name: "", abrv: "" });
   const [editVehicleMake, setEditVehicleMake] = useState(null);
 
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 5;
+  const [sortField, setSortField] = useState("Name");
+  const [sortOrder, setSortOrder] = useState("asc");
+  const [filterText, setFilterText] = useState("");
+
   useEffect(() => {
     const fetchVehicleMakes = async () => {
       const data = await VehicleMakeService.readAll();
@@ -63,6 +69,43 @@ const VehicleListPage = () => {
     setVehicleMakes(updatedMakes);
   };
 
+  const handleSort = (field) => {
+    const order = sortField === field && sortOrder === "asc" ? "desc" : "asc";
+    setSortField(field);
+    setSortOrder(order);
+  };
+
+  const filteredVehicleMakes = vehicleMakes
+    .filter(
+      (make) =>
+        make.Name.toLowerCase().includes(filterText.toLowerCase()) ||
+        make.Abrv.toLowerCase().includes(filterText.toLowerCase())
+    )
+    .sort((a, b) => {
+      if (a[sortField] < b[sortField]) return sortOrder === "asc" ? -1 : 1;
+      if (a[sortField] > b[sortField]) return sortOrder === "asc" ? 1 : -1;
+      return 0;
+    });
+
+  const startIndex = (currentPage - 1) * pageSize;
+  const paginatedVehicleMakes = filteredVehicleMakes.slice(
+    startIndex,
+    startIndex + pageSize
+  );
+
+  const handleNextPage = () => {
+    setCurrentPage((prevPage) => prevPage + 1);
+  };
+
+  const handlePreviousPage = () => {
+    setCurrentPage((prevPage) => Math.max(prevPage - 1, 1));
+  };
+
+  const handleFilterChange = (e) => {
+    setFilterText(e.target.value);
+    setCurrentPage(1);
+  };
+
   return (
     <div>
       <h1>Vehicle List Page</h1>
@@ -92,8 +135,19 @@ const VehicleListPage = () => {
           <button onClick={() => setEditVehicleMake(null)}>Cancel</button>
         )}
       </form>
+
+      <input
+        type="text"
+        placeholder="Filter by name or abbreviation"
+        value={filterText}
+        onChange={handleFilterChange}
+      />
+
+      <button onClick={() => handleSort("Name")}>Sort by Name</button>
+      <button onClick={() => handleSort("Abrv")}>Sort by Abbreviation</button>
+
       <ul>
-        {vehicleMakes.map((make) => (
+        {paginatedVehicleMakes.map((make) => (
           <li key={make.id}>
             {make.Name} ({make.Abrv})
             <button onClick={() => handleEditClick(make)}>Edit</button>
@@ -103,6 +157,16 @@ const VehicleListPage = () => {
           </li>
         ))}
       </ul>
+
+      <button onClick={handlePreviousPage} disabled={currentPage === 1}>
+        Previous
+      </button>
+      <button
+        onClick={handleNextPage}
+        disabled={startIndex + pageSize >= filteredVehicleMakes.length}
+      >
+        Next
+      </button>
     </div>
   );
 };
