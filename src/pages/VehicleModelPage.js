@@ -90,7 +90,6 @@ const VehicleModelPage = () => {
     setSortOrder(order);
   };
 
-  // Filtriranje, sortiranje i paginacija podataka
   const filteredVehicleModels = vehicleModels
     .filter(
       (model) =>
@@ -104,7 +103,6 @@ const VehicleModelPage = () => {
       return 0;
     });
 
-  // Paginacija
   const startIndex = (currentPage - 1) * pageSize;
   const paginatedVehicleModels = filteredVehicleModels.slice(
     startIndex,
@@ -121,7 +119,7 @@ const VehicleModelPage = () => {
 
   const handleFilterChange = (e) => {
     setFilterText(e.target.value);
-    setCurrentPage(1); // Resetiraj na prvu stranicu kad korisnik unese filter
+    setCurrentPage(1);
   };
 
   const validateModel = (model) => {
@@ -200,6 +198,15 @@ const VehicleModelPage = () => {
           </li>
         ))}
       </ul>
+      <button onClick={handlePreviousPage} disabled={currentPage === 1}>
+        Previous
+      </button>
+      <button
+        onClick={handleNextPage}
+        disabled={startIndex + pageSize >= vehicleModels.length}
+      >
+        Next
+      </button>
 
       <button onClick={handlePreviousPage} disabled={currentPage === 1}>
         Previous

@@ -1,17 +1,17 @@
 import React, { useEffect, useState } from "react";
 import VehicleMakeService from "../services/VehicleMakeService";
+import VehicleMakeForm from "../components/VehicleMakeForm";
 
 const VehicleListPage = () => {
   const [vehicleMakes, setVehicleMakes] = useState([]);
-  const [newVehicleMake, setNewVehicleMake] = useState({ name: "", abrv: "" });
   const [editVehicleMake, setEditVehicleMake] = useState(null);
+  const [errors, setErrors] = useState({});
 
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 5;
+  const [filterText, setFilterText] = useState("");
   const [sortField, setSortField] = useState("Name");
   const [sortOrder, setSortOrder] = useState("asc");
-  const [filterText, setFilterText] = useState("");
-  const [errors, setErrors] = useState({});
 
   useEffect(() => {
     const fetchVehicleMakes = async () => {
@@ -22,49 +22,37 @@ const VehicleListPage = () => {
     fetchVehicleMakes();
   }, []);
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    if (editVehicleMake) {
-      setEditVehicleMake((prev) => ({
-        ...prev,
-        [name === "name" ? "Name" : "Abrv"]: value,
-      }));
-    } else {
-      setNewVehicleMake((prev) => ({ ...prev, [name]: value }));
-    }
+  const validateMake = (make) => {
+    const errors = {};
+    if (!make.name) errors.name = "Name is required";
+    if (!make.abrv) errors.abrv = "Abbreviation is required";
+    return errors;
   };
 
-  const handleAddVehicleMake = async (e) => {
-    e.preventDefault();
-    const validationErrors = validateMake(newVehicleMake);
+  const handleAddVehicleMake = async (formData) => {
+    const validationErrors = validateMake(formData);
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
       return;
     }
     await VehicleMakeService.create({
-      Name: newVehicleMake.name,
-      Abrv: newVehicleMake.abrv,
+      Name: formData.name,
+      Abrv: formData.abrv,
     });
     const updatedMakes = await VehicleMakeService.readAll();
     setVehicleMakes(updatedMakes);
-    setNewVehicleMake({ name: "", abrv: "" });
     setErrors({});
   };
 
-  const handleEditClick = (make) => {
-    setEditVehicleMake(make);
-  };
-
-  const handleUpdateVehicleMake = async (e) => {
-    e.preventDefault();
-    const validationErrors = validateMake(editVehicleMake);
+  const handleUpdateVehicleMake = async (formData) => {
+    const validationErrors = validateMake(formData);
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
       return;
     }
     await VehicleMakeService.update(editVehicleMake.id, {
-      Name: editVehicleMake.Name,
-      Abrv: editVehicleMake.Abrv,
+      Name: formData.name,
+      Abrv: formData.abrv,
     });
     const updatedMakes = await VehicleMakeService.readAll();
     setVehicleMakes(updatedMakes);
@@ -72,10 +60,27 @@ const VehicleListPage = () => {
     setErrors({});
   };
 
+  const handleEditClick = (make) => {
+    setEditVehicleMake(make);
+  };
+
   const handleDeleteVehicleMake = async (id) => {
     await VehicleMakeService.delete(id);
     const updatedMakes = await VehicleMakeService.readAll();
     setVehicleMakes(updatedMakes);
+  };
+
+  const handleNextPage = () => {
+    setCurrentPage((prevPage) => prevPage + 1);
+  };
+
+  const handlePreviousPage = () => {
+    setCurrentPage((prevPage) => Math.max(prevPage - 1, 1));
+  };
+
+  const handleFilterChange = (e) => {
+    setFilterText(e.target.value);
+    setCurrentPage(1);
   };
 
   const handleSort = (field) => {
@@ -102,67 +107,25 @@ const VehicleListPage = () => {
     startIndex + pageSize
   );
 
-  const handleNextPage = () => {
-    setCurrentPage((prevPage) => prevPage + 1);
-  };
-
-  const handlePreviousPage = () => {
-    setCurrentPage((prevPage) => Math.max(prevPage - 1, 1));
-  };
-
-  const handleFilterChange = (e) => {
-    setFilterText(e.target.value);
-    setCurrentPage(1);
-  };
-
-  const validateMake = (make) => {
-    const errors = {};
-    if (!make.name) errors.name = "Name is required";
-    if (!make.abrv) errors.abrv = "Abbrevation is required";
-    return errors;
-  };
-
   return (
     <div>
       <h1>Vehicle List Page</h1>
-      <form
+      <VehicleMakeForm
         onSubmit={
           editVehicleMake ? handleUpdateVehicleMake : handleAddVehicleMake
         }
-      >
-        <input
-          type="text"
-          name="name"
-          placeholder="Vehicle Make Name"
-          value={editVehicleMake ? editVehicleMake.Name : newVehicleMake.name}
-          onChange={handleInputChange}
-        />
-        {errors.name && <span style={{ color: "red" }}>{errors.name}</span>}
-        <input
-          type="text"
-          name="abrv"
-          placeholder="Abbreviation"
-          value={editVehicleMake ? editVehicleMake.Abrv : newVehicleMake.abrv}
-          onChange={handleInputChange}
-        />
-        {errors.abrv && <span style={{ color: "red" }}>{errors.abrv}</span>}
-        <button type="submit">
-          {editVehicleMake ? "Save" : "Add Vehicle Make"}
-        </button>
-        {editVehicleMake && (
-          <button onClick={() => setEditVehicleMake(null)}>Cancel</button>
-        )}
-      </form>
+        onCancel={() => setEditVehicleMake(null)}
+        initialData={editVehicleMake}
+        errors={errors}
+      />
       <input
         type="text"
         placeholder="Filter by name or abbreviation"
         value={filterText}
         onChange={handleFilterChange}
       />
-
       <button onClick={() => handleSort("Name")}>Sort by Name</button>
       <button onClick={() => handleSort("Abrv")}>Sort by Abbreviation</button>
-
       <ul>
         {paginatedVehicleMakes.map((make) => (
           <li key={make.id}>
@@ -174,7 +137,6 @@ const VehicleListPage = () => {
           </li>
         ))}
       </ul>
-
       <button onClick={handlePreviousPage} disabled={currentPage === 1}>
         Previous
       </button>
