@@ -3,6 +3,9 @@ import VehicleMakeService from "../services/VehicleMakeService";
 import VehicleMakeForm from "../components/VehicleMakeForm";
 
 const VehicleListPage = () => {
+  const [successMessage, setSuccessMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
+
   const [vehicleMakes, setVehicleMakes] = useState([]);
   const [editVehicleMake, setEditVehicleMake] = useState(null);
   const [errors, setErrors] = useState({});
@@ -29,35 +32,62 @@ const VehicleListPage = () => {
     return errors;
   };
 
+  const clearMessages = () => {
+    setTimeout(() => {
+      setSuccessMessage("");
+      setErrorMessage("");
+    }, 3000);
+  };
+
   const handleAddVehicleMake = async (formData) => {
     const validationErrors = validateMake(formData);
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
+      setErrorMessage("Please fix the errors in the form.");
+      clearMessages();
       return;
     }
-    await VehicleMakeService.create({
-      Name: formData.name,
-      Abrv: formData.abrv,
-    });
-    const updatedMakes = await VehicleMakeService.readAll();
-    setVehicleMakes(updatedMakes);
-    setErrors({});
+
+    try {
+      await VehicleMakeService.create({
+        Name: formData.name,
+        Abrv: formData.abrv,
+      });
+      const updatedMakes = await VehicleMakeService.readAll();
+      setVehicleMakes(updatedMakes);
+      setSuccessMessage("Vehicle make added successfully!");
+      clearMessages();
+      setErrors({});
+    } catch (error) {
+      setErrorMessage("Failed to add vehicle make.");
+      clearMessages();
+    }
   };
 
   const handleUpdateVehicleMake = async (formData) => {
     const validationErrors = validateMake(formData);
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
+      setErrorMessage("Please fix the errors in the form.");
+      clearMessages();
       return;
     }
-    await VehicleMakeService.update(editVehicleMake.id, {
-      Name: formData.name,
-      Abrv: formData.abrv,
-    });
-    const updatedMakes = await VehicleMakeService.readAll();
-    setVehicleMakes(updatedMakes);
-    setEditVehicleMake(null);
-    setErrors({});
+
+    try {
+      await VehicleMakeService.update(editVehicleMake.id, {
+        Name: formData.name,
+        Abrv: formData.abrv,
+      });
+      const updatedMakes = await VehicleMakeService.readAll();
+      setVehicleMakes(updatedMakes);
+      setEditVehicleMake(null);
+      setSuccessMessage("Vehicle make updated successfully!");
+      clearMessages();
+      setErrors({});
+    } catch (error) {
+      setErrorMessage("Failed to update vehicle make.");
+      clearMessages();
+    }
   };
 
   const handleEditClick = (make) => {
@@ -65,9 +95,21 @@ const VehicleListPage = () => {
   };
 
   const handleDeleteVehicleMake = async (id) => {
-    await VehicleMakeService.delete(id);
-    const updatedMakes = await VehicleMakeService.readAll();
-    setVehicleMakes(updatedMakes);
+    const confirmed = window.confirm(
+      "Are you sure you want to delete this vehicle make?"
+    );
+    if (!confirmed) return;
+
+    try {
+      await VehicleMakeService.delete(id);
+      const updatedMakes = await VehicleMakeService.readAll();
+      setVehicleMakes(updatedMakes);
+      setSuccessMessage("Vehicle make deleted successfully!");
+      clearMessages();
+    } catch (error) {
+      setErrorMessage("Failed to delete vehicle make.");
+      clearMessages();
+    }
   };
 
   const handleNextPage = () => {
@@ -110,6 +152,9 @@ const VehicleListPage = () => {
   return (
     <div>
       <h1>Vehicle List Page</h1>
+      {successMessage && <div style={{ color: "green" }}>{successMessage}</div>}
+      {errorMessage && <div style={{ color: "red" }}>{errorMessage}</div>}
+
       <VehicleMakeForm
         onSubmit={
           editVehicleMake ? handleUpdateVehicleMake : handleAddVehicleMake
