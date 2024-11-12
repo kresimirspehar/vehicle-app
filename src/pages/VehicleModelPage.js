@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import VehicleModelService from "../services/VehicleModelService";
+import { useNavigate } from "react-router-dom";
 
 const VehicleModelPage = () => {
   const [vehicleModels, setVehicleModels] = useState([]);
@@ -16,6 +17,7 @@ const VehicleModelPage = () => {
   const [sortOrder, setSortOrder] = useState("asc");
   const [filterText, setFilterText] = useState("");
   const [errors, setErrors] = useState({});
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchVehicleModels = async () => {
@@ -122,6 +124,10 @@ const VehicleModelPage = () => {
     setCurrentPage(1);
   };
 
+  const handleNavigateToList = () => {
+    navigate("/");
+  };
+
   const validateModel = (model) => {
     const errors = {};
     if (!model.name) errors.name = "Name is required";
@@ -208,15 +214,7 @@ const VehicleModelPage = () => {
         Next
       </button>
 
-      <button onClick={handlePreviousPage} disabled={currentPage === 1}>
-        Previous
-      </button>
-      <button
-        onClick={handleNextPage}
-        disabled={startIndex + pageSize >= filteredVehicleModels.length}
-      >
-        Next
-      </button>
+      <button onClick={handleNavigateToList}>Go to Vehicle List</button>
     </div>
   );
 };

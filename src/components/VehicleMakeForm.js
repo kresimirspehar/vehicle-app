@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 
 const VehicleMakeForm = ({ onSubmit, onCancel, initialData = {}, errors }) => {
   const [formData, setFormData] = useState({ name: "", abrv: "" });
+  const [validationErrors, setValidationErrors] = useState({});
 
   useEffect(() => {
     if (initialData) {
@@ -17,9 +18,25 @@ const VehicleMakeForm = ({ onSubmit, onCancel, initialData = {}, errors }) => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  const validate = () => {
+    const errors = {};
+    if (!formData.name) {
+      errors.name = "Name is required";
+    }
+    if (!formData.abrv) {
+      errors.abrv = "Abbreviation is required";
+    }
+    return errors;
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSubmit(formData);
+    const errors = validate();
+    if (Object.keys(errors).length === 0) {
+      onSubmit(formData);
+    } else {
+      setValidationErrors(errors);
+    }
   };
 
   return (
@@ -31,7 +48,10 @@ const VehicleMakeForm = ({ onSubmit, onCancel, initialData = {}, errors }) => {
         value={formData.name}
         onChange={handleChange}
       />
-      {errors?.name && <span style={{ color: "red" }}>{errors.name}</span>}
+      {validationErrors.name && (
+        <span style={{ color: "red" }}>{validationErrors.name}</span>
+      )}
+
       <input
         type="text"
         name="abrv"
@@ -39,7 +59,10 @@ const VehicleMakeForm = ({ onSubmit, onCancel, initialData = {}, errors }) => {
         value={formData.abrv}
         onChange={handleChange}
       />
-      {errors?.abrv && <span style={{ color: "red" }}>{errors.abrv}</span>}
+      {validationErrors.abrv && (
+        <span style={{ color: "red" }}>{validationErrors.abrv}</span>
+      )}
+
       <button type="submit">{initialData ? "Save" : "Add Vehicle Make"}</button>
       {initialData && (
         <button type="button" onClick={onCancel}>

@@ -10,6 +10,7 @@ const VehicleListPage = observer(() => {
   const [sortOrder, setSortOrder] = useState("asc");
   const pageSize = 5;
   const [currentPage, setCurrentPage] = useState(1);
+  const [formResetKey, setFormResetKey] = useState(0);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -21,6 +22,7 @@ const VehicleListPage = observer(() => {
       Name: formData.name,
       Abrv: formData.abrv,
     });
+    setFormResetKey((prevKey) => prevKey + 1); // Change key to reset form
   };
 
   const handleUpdateVehicleMake = async (formData) => {
@@ -57,6 +59,10 @@ const VehicleListPage = observer(() => {
     setSortOrder(order);
   };
 
+  const handleNavigateToModels = () => {
+    navigate("/models");
+  };
+
   const filteredVehicleMakes = vehicleMakeStore.vehicleMakes
     .filter(
       (make) =>
@@ -82,8 +88,8 @@ const VehicleListPage = observer(() => {
         <div style={{ color: "red" }}>{vehicleMakeStore.error}</div>
       )}
 
-      {}
       <VehicleMakeForm
+        key={formResetKey} // This will reset the form
         onSubmit={
           vehicleMakeStore.editVehicleMake
             ? handleUpdateVehicleMake
@@ -94,7 +100,6 @@ const VehicleListPage = observer(() => {
         errors={{}}
       />
 
-      {}
       <input
         type="text"
         placeholder="Filter by name or abbreviation"
@@ -128,6 +133,8 @@ const VehicleListPage = observer(() => {
       >
         Next
       </button>
+
+      <button onClick={handleNavigateToModels}>Go to Vehicle Models</button>
     </div>
   );
 });

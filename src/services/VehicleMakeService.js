@@ -7,4 +7,5 @@ class VehicleMakeService extends BaseService {
   }
 }
 
-export default new VehicleMakeService();
+const vehicleMakeService = new VehicleMakeService();
+export default vehicleMakeService;
