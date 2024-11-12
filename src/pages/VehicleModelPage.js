@@ -59,7 +59,7 @@ const VehicleModelPage = () => {
   };
 
   const handleEditClick = (model) => {
-    setEditVehicleModel(model);
+    navigate(`/models/edit/${model.id}`);
   };
 
   const handleUpdateVehicleModel = async (e) => {
