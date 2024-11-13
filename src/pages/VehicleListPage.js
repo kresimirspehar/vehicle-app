@@ -4,6 +4,8 @@ import vehicleMakeStore from "../stores/VehicleMakeStore";
 import VehicleMakeForm from "../components/VehicleMakeForm";
 import VehicleMakeList from "../components/VehicleMakeList";
 import { useNavigate } from "react-router-dom";
+import { sortItems } from "../utils/sortUtils";
+import { filterItems } from "../utils/filterUtils";
 
 const VehicleListPage = observer(() => {
   const [filterText, setFilterText] = useState("");
@@ -51,17 +53,16 @@ const VehicleListPage = observer(() => {
     setSortOrder(order);
   };
 
-  const filteredVehicleMakes = vehicleMakeStore.vehicleMakes
-    .filter(
-      (make) =>
-        make.Name.toLowerCase().includes(filterText.toLowerCase()) ||
-        make.Abrv.toLowerCase().includes(filterText.toLowerCase())
-    )
-    .sort((a, b) => {
-      if (a[sortField] < b[sortField]) return sortOrder === "asc" ? -1 : 1;
-      if (a[sortField] > b[sortField]) return sortOrder === "asc" ? 1 : -1;
-      return 0;
-    });
+  const filteredVehicleMakes = filterItems(
+    vehicleMakeStore.vehicleMakes,
+    filterText,
+    ["Name", "Abrv"]
+  );
+  const sortedVehicleMakes = sortItems(
+    filteredVehicleMakes,
+    sortField,
+    sortOrder
+  );
 
   return (
     <div>
@@ -90,7 +91,7 @@ const VehicleListPage = observer(() => {
       />
 
       <VehicleMakeList
-        makes={filteredVehicleMakes}
+        makes={sortedVehicleMakes}
         onEdit={handleEditClick}
         onDelete={handleDeleteVehicleMake}
         currentPage={currentPage}
