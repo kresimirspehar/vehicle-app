@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { observer } from "mobx-react-lite";
 import vehicleMakeStore from "../stores/VehicleMakeStore";
 import VehicleMakeForm from "../components/VehicleMakeForm";
+import VehicleMakeList from "../components/VehicleMakeList";
 import { useNavigate } from "react-router-dom";
 
 const VehicleListPage = observer(() => {
@@ -22,28 +23,20 @@ const VehicleListPage = observer(() => {
       Name: formData.name,
       Abrv: formData.abrv,
     });
-    setFormResetKey((prevKey) => prevKey + 1); // Change key to reset form
+    setFormResetKey((prevKey) => prevKey + 1);
   };
 
   const handleUpdateVehicleMake = async (formData) => {
     await vehicleMakeStore.updateVehicleMake(
       vehicleMakeStore.editVehicleMake.id,
-      {
-        Name: formData.name,
-        Abrv: formData.abrv,
-      }
+      { Name: formData.name, Abrv: formData.abrv }
     );
   };
 
-  const handleEditClick = (id) => {
-    navigate(`/edit/${id}`);
-  };
+  const handleEditClick = (id) => navigate(`/edit/${id}`);
 
   const handleDeleteVehicleMake = async (id) => {
-    const confirmed = window.confirm(
-      "Are you sure you want to delete this vehicle make?"
-    );
-    if (confirmed) {
+    if (window.confirm("Are you sure you want to delete this vehicle make?")) {
       await vehicleMakeStore.deleteVehicleMake(id);
     }
   };
@@ -53,14 +46,9 @@ const VehicleListPage = observer(() => {
     setCurrentPage(1);
   };
 
-  const handleSort = (field) => {
-    const order = sortField === field && sortOrder === "asc" ? "desc" : "asc";
+  const handleSort = (field, order) => {
     setSortField(field);
     setSortOrder(order);
-  };
-
-  const handleNavigateToModels = () => {
-    navigate("/models");
   };
 
   const filteredVehicleMakes = vehicleMakeStore.vehicleMakes
@@ -75,12 +63,6 @@ const VehicleListPage = observer(() => {
       return 0;
     });
 
-  const startIndex = (currentPage - 1) * pageSize;
-  const paginatedVehicleMakes = filteredVehicleMakes.slice(
-    startIndex,
-    startIndex + pageSize
-  );
-
   return (
     <div>
       <h1>Vehicle List Page</h1>
@@ -89,7 +71,7 @@ const VehicleListPage = observer(() => {
       )}
 
       <VehicleMakeForm
-        key={formResetKey} // This will reset the form
+        key={formResetKey}
         onSubmit={
           vehicleMakeStore.editVehicleMake
             ? handleUpdateVehicleMake
@@ -106,35 +88,20 @@ const VehicleListPage = observer(() => {
         value={filterText}
         onChange={handleFilterChange}
       />
-      <button onClick={() => handleSort("Name")}>Sort by Name</button>
-      <button onClick={() => handleSort("Abrv")}>Sort by Abbreviation</button>
 
-      <ul>
-        {paginatedVehicleMakes.map((make) => (
-          <li key={make.id}>
-            {make.Name} ({make.Abrv})
-            <button onClick={() => handleEditClick(make.id)}>Edit</button>
-            <button onClick={() => handleDeleteVehicleMake(make.id)}>
-              Delete
-            </button>
-          </li>
-        ))}
-      </ul>
+      <VehicleMakeList
+        makes={filteredVehicleMakes}
+        onEdit={handleEditClick}
+        onDelete={handleDeleteVehicleMake}
+        currentPage={currentPage}
+        pageSize={pageSize}
+        setPage={setCurrentPage}
+        sortField={sortField}
+        sortOrder={sortOrder}
+        onSort={handleSort}
+      />
 
-      <button
-        onClick={() => setCurrentPage((prevPage) => Math.max(prevPage - 1, 1))}
-        disabled={currentPage === 1}
-      >
-        Previous
-      </button>
-      <button
-        onClick={() => setCurrentPage((prevPage) => prevPage + 1)}
-        disabled={startIndex + pageSize >= filteredVehicleMakes.length}
-      >
-        Next
-      </button>
-
-      <button onClick={handleNavigateToModels}>Go to Vehicle Models</button>
+      <button onClick={() => navigate("/models")}>Go to Vehicle Models</button>
     </div>
   );
 });
